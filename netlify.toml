@@ -1,0 +1,13 @@
+# The public site: a read-only print (static JSON and images). Nothing here writes state.
+[build]
+  publish = "public"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
