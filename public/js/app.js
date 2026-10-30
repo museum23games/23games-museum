@@ -7,12 +7,12 @@
   var num = function (n) { return Number(n || 0).toLocaleString("en-US"); };
 
   function load() {
-    return Promise.all(["items", "collections", "quests", "stories"].map(function (n) {
-      return fetch("/data/" + n + ".json").then(function (r) { if (!r.ok) throw new Error(n + " " + r.status); return r.json(); });
+    return Promise.all(["items", "collections", "quests", "stories", "memories"].map(function (n) {
+      return fetch("/data/" + n + ".json").then(function (r) { if (!r.ok) { if (n === "memories") return { memories: [] }; throw new Error(n + " " + r.status); } return r.json(); });
     })).then(function (a) {
       var byId = {}; a[0].items.forEach(function (i) { byId[i.id] = i; });
       var cols = {}; a[1].collections.forEach(function (c) { cols[c.id] = c; });
-      D = { items: a[0].items, byId: byId, cols: cols, collections: a[1].collections, quests: a[2], stories: a[3].stories || {} };
+      D = { items: a[0].items, byId: byId, cols: cols, collections: a[1].collections, quests: a[2], stories: a[3].stories || {}, memories: a[4].memories || [] };
     });
   }
 
@@ -129,16 +129,94 @@
   function home() {
     document.title = "23 Games Museum";
     var ch = (D.quests.chapters || []).filter(function (c) { return c.id === "ps2-us"; })[0], t = today();
-    app.innerHTML = '<section class="hero"><div class="kick">Day ' + num(t.day) + ' of PlayStation</div><h1>Every game has a plaque. Every plaque can carry your memory.</h1>' +
+    app.innerHTML = '<section class="hero home"><div><div class="kick">Day ' + num(t.day) + ' of PlayStation</div><h1>Every game has a plaque. Every plaque can carry your memory.</h1>' +
       '<p>Search a game you played and find its plaque.</p>' +
-      '<div class="search"><input id="hero-search" type="search" placeholder="Search a title, for example Martha Is Dead" aria-label="Search the museum" autocomplete="off"><div id="sr" class="results"></div></div>' +
-      '<a class="cta" href="/shelves" data-link>Walk the shelves</a></section>' +
+      '<div class="search"><input id="hero-search" type="search" placeholder="Search a title, for example Martha Is Dead" aria-label="Search the museum" autocomplete="off"><div id="sr" class="results"></div></div></div>' +
+      '<div class="roomcol">' + room() + '<a class="sm quiet" href="/gallery" data-link>The gallery: the rooms, the shelves, the cabinets ›</a></div></section>' +
+      '<div class="doors"><a class="door pu" href="/shelves" data-link style="background-image:url(/img/site/photo3.jpg)"><b>Walk the shelves</b><span>Every platform, the way the real shelves stand</span></a>' +
+      '<a class="door pk" href="/collections" data-link style="background-image:url(/img/site/welcome-wall.jpg)"><b>Feel the collections</b><span>Pieces from every shelf, kept together</span></a></div>' +
       (t.item ? '<a class="card today" href="/i/' + esc(t.item.id) + '" data-link>' + (t.item.img ? '<img src="/img/' + esc(t.item.id) + '.jpg" alt="">' : "") +
         '<div><div class="kick">Today’s plaque</div><b>' + esc(t.item.title) + '</b><div class="sm mu">' + itemLine(t.item) + "</div></div></a>" : "") +
-      (ch ? '<div class="quest"><div class="sm"><b>' + esc(ch.land) + "</b> · " + num(ch.have) + " of " + num(ch.goal) + " found</div>" +
-        '<div class="bar"><i style="width:' + Math.round(100 * ch.have / ch.goal) + '%"></i></div></div>' : "") +
+      (ch ? '<a class="quest" href="/quest" data-link><div class="sm"><b>' + esc(ch.land) + "</b> · " + num(ch.have) + " of " + num(ch.goal) + ' found <span class="mu">· the Quest ›</span></div>' +
+        '<div class="bar"><i style="width:' + Math.round(100 * ch.have / ch.goal) + '%"></i></div></a>' : "") +
       '<p class="sm mu keepers">Soon: Keepers, the people who keep a game alive with us.</p>';
     wireSearch();
+  }
+
+  /* the small room at two in the morning (from the vision): the television is the way into the memories */
+  function room() {
+    return '<a class="room" href="/memories" data-link aria-label="Memories we love">' +
+      '<svg viewBox="0 0 620 426" aria-hidden="true"><g stroke="rgba(236,233,226,.08)" stroke-width="2"><line x1="40" y1="70" x2="250" y2="70"/><line x1="40" y1="120" x2="250" y2="120"/><line x1="40" y1="170" x2="250" y2="170"/></g>' +
+      '<g fill="rgba(236,233,226,.12)"><rect x="48" y="44" width="8" height="24"/><rect x="60" y="44" width="8" height="24"/><rect x="72" y="46" width="8" height="22"/><rect x="84" y="44" width="8" height="24"/><rect x="100" y="44" width="8" height="24"/><rect x="112" y="44" width="8" height="24"/><rect x="128" y="46" width="8" height="22"/><rect x="48" y="94" width="8" height="24"/><rect x="60" y="94" width="8" height="24"/><rect x="76" y="94" width="8" height="24"/><rect x="92" y="96" width="8" height="22"/><rect x="104" y="94" width="8" height="24"/><rect x="48" y="144" width="8" height="24"/><rect x="64" y="144" width="8" height="24"/><rect x="76" y="144" width="8" height="24"/></g>' +
+      '<rect x="230" y="110" width="200" height="150" rx="10" fill="#0b0d14" stroke="rgba(236,233,226,.18)" stroke-width="2"/><rect class="tvglow" x="244" y="124" width="172" height="122" rx="4" fill="#3fd2e6" opacity=".85"/>' +
+      '<defs><pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="2" fill="rgba(0,0,0,.18)"/></pattern></defs><rect x="244" y="124" width="172" height="122" rx="4" fill="url(#scan)"/>' +
+      '<text x="330" y="178" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="13" letter-spacing="2" fill="#06222a">MEMORIES</text><text x="330" y="198" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="13" letter-spacing="2" fill="#06222a">WE LOVE</text>' +
+      '<ellipse cx="330" cy="330" rx="200" ry="40" fill="rgba(63,210,230,.08)"/><path d="M300 262 C 280 300, 230 310, 200 340" fill="none" stroke="rgba(236,233,226,.25)" stroke-width="2"/><path d="M360 262 C 380 300, 430 310, 460 340" fill="none" stroke="rgba(236,233,226,.25)" stroke-width="2"/>' +
+      '<g class="pad1"><rect x="160" y="336" width="80" height="34" rx="14" fill="#1a1f2e" stroke="#f2a93b" stroke-width="2"/><circle cx="178" cy="353" r="4" fill="#f2a93b"/><circle cx="222" cy="353" r="4" fill="#f2a93b"/></g>' +
+      '<g class="pad2"><rect x="420" y="336" width="80" height="34" rx="14" fill="#1a1f2e" stroke="#f2a93b" stroke-width="2"/><circle cx="438" cy="353" r="4" fill="#f2a93b"/><circle cx="482" cy="353" r="4" fill="#f2a93b"/></g>' +
+      '<rect x="470" y="48" width="100" height="120" rx="4" fill="none" stroke="rgba(236,233,226,.14)" stroke-width="2"/><text x="520" y="124" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="800" font-size="46" fill="rgba(236,233,226,.22)" letter-spacing="-2">23</text>' +
+      '<text x="330" y="36" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="11" letter-spacing="3" fill="#8d93a3">02:14 · SOMEONE’S SMALL ROOM</text></svg>' +
+      '<div class="pass">if you lost, you <b>passed the controller</b></div></a>';
+  }
+
+  /* ---- the Quest: the chapters, what joined last, what is next ---- */
+  function quest() {
+    document.title = "The Quest · 23 Games Museum";
+    var q = D.quests, chs = (q.chapters || []).slice().sort(function (a, b) { return (b.have / b.goal) - (a.have / a.goal); });
+    var latest = D.items.filter(function (i) { return i.status === "owned"; }).sort(function (a, b) { return b.id.localeCompare(a.id); }).slice(0, 8);
+    var next = D.items.filter(function (i) { return i.status === "hunting" && i.collections.indexOf("col_cur_ps2") >= 0; }).slice(0, 8);
+    app.innerHTML = '<h1>' + esc(q.name || "The Quest") + '</h1><p class="mu">' + esc(q.sub || "") + "</p>" +
+      '<p><b>' + num(q.owned) + '</b> pieces on the shelves · <b>' + num(q.hunting) + "</b> still to find</p>" +
+      '<div class="chapters">' + chs.map(function (c) {
+        return '<div class="card chap"><div class="kick">' + esc(c.land) + "</div><b>" + esc(c.name) + '</b><div class="sm mu">' + esc(c.about) + '</div><div class="sm" style="margin-top:8px">' + num(c.have) + " of " + num(c.goal) +
+          '</div><div class="bar"><i style="width:' + Math.round(100 * c.have / Math.max(1, c.goal)) + '%"></i></div></div>';
+      }).join("") + "</div>" +
+      '<h2>Latest to join</h2><div class="grid">' + latest.map(tile).join("") + "</div>" +
+      '<h2>What is next in the PS2 Kingdom</h2><p class="sm mu">The hunt list of the chapter we lead with. If you know where one of these is, tell us on its plaque.</p><div class="grid">' + next.map(tile).join("") + "</div>" +
+      '<div class="card" style="margin-top:22px"><b>Help us in our quest</b><p class="sm mu">Every plaque has a place for your memory. If you know where a missing piece is, write it there. Keepers, the people who keep the museum alive with us, come later; nothing is for sale here.</p></div>';
+  }
+  function tile(i) {
+    return '<a class="card tile' + (i.status === "hunting" ? " hunt" : "") + '" href="/i/' + esc(i.id) + '" data-link>' + (i.img ? '<img src="/img/' + esc(i.id) + '_t.jpg" alt="" loading="lazy" onerror="this.remove()">' : "") + "<b>" + esc(i.title) + '</b><div class="sm mu">' + itemLine(i) + (i.status === "hunting" ? " · still to find" : "") + "</div></a>";
+  }
+
+  /* ---- the collections: pieces from every shelf, kept together ---- */
+  function collections() {
+    document.title = "Collections · 23 Games Museum";
+    var cs = D.collections.filter(function (c) { return !c.shelf && c.count > 0; }).sort(function (a, b) { return b.count - a.count; });
+    app.innerHTML = '<h1>Feel the collections</h1><p class="mu">A collection is a thread through the museum: pieces from different shelves and different rooms, kept together because they belong together.</p>' +
+      '<div class="cgrid">' + cs.map(function (c, k) {
+        return '<a class="ctile t' + (k % 4) + '" href="/collection/' + esc(c.id) + '" data-link><b>' + esc(c.name) + "</b><span>" + num(c.count) + " pieces</span>" + (c.description ? '<p class="sm">' + esc(c.description) + "</p>" : "") + "</a>";
+      }).join("") + "</div>";
+  }
+  function collection(id) {
+    var c = D.cols[id]; if (!c || c.shelf) return notFound();
+    document.title = c.name + " · 23 Games Museum";
+    var set = {}; (c.members || []).forEach(function (m) { set[m] = 1; });
+    var list = D.items.filter(function (i) { return set[i.id]; }), own = list.filter(function (i) { return i.status === "owned"; }), hunt = list.filter(function (i) { return i.status !== "owned"; });
+    app.innerHTML = '<p class="sm"><a href="/collections" data-link>‹ All collections</a></p><h1>' + esc(c.name) + "</h1>" + (c.description ? '<p class="mu">' + esc(c.description) + "</p>" : "") +
+      '<p class="sm"><b>' + num(own.length) + "</b> on the shelves" + (hunt.length ? " · <b>" + num(hunt.length) + "</b> still to find" : "") + "</p>" +
+      '<div class="grid">' + own.map(tile).join("") + hunt.map(tile).join("") + "</div>";
+  }
+
+  /* ---- memories we love and the gallery ---- */
+  function memories(slug) {
+    var ms = D.memories || [];
+    if (slug) {
+      var m = ms.filter(function (x) { return x.slug === slug; })[0]; if (!m) return notFound();
+      document.title = m.title + " · 23 Games Museum";
+      app.innerHTML = '<p class="sm"><a href="/memories" data-link>‹ Memories we love</a></p><div class="story"><div class="kick">' + esc(m.sub) + "</div><h1>" + esc(m.title) + "</h1>" + m.paragraphs.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
+      return;
+    }
+    document.title = "Memories we love · 23 Games Museum";
+    app.innerHTML = '<h1>Memories we love</h1><p class="mu">The museum keeps the box on the shelf and the evening it was played. These are the founder’s own, first.</p>' +
+      '<div class="grid">' + ms.map(function (m) { return '<a class="card" href="/memory/' + esc(m.slug) + '" data-link><div class="kick">' + esc(m.sub) + "</div><b>" + esc(m.title) + '</b><p class="sm mu">' + esc((m.paragraphs[0] || "").slice(0, 140)) + "…</p></a>"; }).join("") + "</div>" +
+      '<p class="sm mu" style="margin-top:22px">Your memory belongs on the plaque of the game it happened with. Search the game, and write it there.</p>';
+  }
+  var GALLERY = [["welcome-room", "The room"], ["photo3", "The wall"], ["welcome-wall", "The cabinet"], ["photo1", "Shelves"], ["photo2", "Figures and boxes"], ["photo5", "Lights off"], ["photo4", "The corner"], ["photo6", "The cabinet again"], ["hero1", ""], ["hero2", ""], ["hero3", ""], ["hero4", ""], ["hero5", ""]];
+  function galleryPage() {
+    document.title = "Gallery · 23 Games Museum";
+    app.innerHTML = '<h1>The gallery</h1><p class="mu">The rooms, the shelves and the cabinets as they stand.</p><div class="gal2">' +
+      GALLERY.map(function (g) { return '<figure><img src="/img/site/' + g[0] + '.jpg" alt="' + esc(g[1]) + '" loading="lazy">' + (g[1] ? "<figcaption>" + esc(g[1]) + "</figcaption>" : "") + "</figure>"; }).join("") + "</div>";
   }
 
   /* the day count and today's plaque are the same for every visitor: they depend only on the date */
@@ -277,6 +355,12 @@
     if (p === "/index.html" || p === "/museum" || p === "/museum/index.html") { history.replaceState(null, "", "/"); p = "/"; }   /* the old installed app opens /index.html */
     if (p === "/") home();
     else if (p === "/shelves") shelves();
+    else if (p === "/quest") quest();
+    else if (p === "/collections") collections();
+    else if ((m = /^\/collection\/([A-Za-z0-9_-]+)$/.exec(p))) collection(m[1]);
+    else if (p === "/memories") memories();
+    else if ((m = /^\/memory\/([a-z0-9-]+)$/.exec(p))) memories(m[1]);
+    else if (p === "/gallery") galleryPage();
     else if ((m = /^\/shelf\/([A-Za-z0-9_-]+)$/.exec(p))) shelf(m[1], parseInt(q.get("page"), 10) || 1);
     else if ((m = /^\/i\/(\d{5})$/.exec(p))) plaque(m[1]);
     else notFound();

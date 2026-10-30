@@ -96,3 +96,33 @@ a.card:hover{border-color:var(--pu)}.card b{font-size:17px}
 .pm.trailer b,.pm.trailer span{position:absolute;left:16px}.pm.trailer b{bottom:30px;font-size:18px;text-shadow:0 1px 6px #000}.pm.trailer span{bottom:12px}
 .pm.trailer.on iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 @media(max-width:700px){.plaque{grid-template-columns:1fr}.plaque>div:first-child{order:2}}
+/* home: text and search left, the small room right; two photo doors */
+.hero.home{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:28px;align-items:center}
+.roomcol{display:flex;flex-direction:column;gap:8px;align-items:flex-end}.roomcol .quiet{color:var(--mu);text-decoration:none}.roomcol .quiet:hover{color:#fff}
+.room{display:block;position:relative;width:100%;aspect-ratio:16/11;border-radius:14px;overflow:hidden;background:radial-gradient(60% 45% at 50% 42%,rgba(63,210,230,.22),rgba(63,210,230,.04) 55%,transparent 75%),#05060a;border:1px solid var(--line)}
+.room svg{position:absolute;inset:0;width:100%;height:100%}.room:hover .tvglow{opacity:1}
+.tvglow{animation:tv 3.2s ease-in-out infinite}@keyframes tv{0%,100%{opacity:.75}40%{opacity:1}60%{opacity:.85}}
+.pad1{animation:padA 6s ease-in-out infinite}.pad2{animation:padB 6s ease-in-out infinite}@keyframes padA{0%,45%{opacity:1}55%,95%{opacity:.25}100%{opacity:1}}@keyframes padB{0%,45%{opacity:.25}55%,95%{opacity:1}100%{opacity:.25}}
+.pass{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:11px ui-monospace,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#8d93a3}.pass b{color:#f2a93b;font-weight:500}
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.door{position:relative;display:block;min-height:150px;border-radius:16px;overflow:hidden;text-decoration:none;color:#fff;background-size:cover;background-position:center;filter:grayscale(1);transition:filter .3s}.door:hover{filter:grayscale(.2)}
+.door::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,11,20,.15),rgba(13,11,20,.85))}
+.door.pu::after,.door.pk::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px}.door.pu::after{background:var(--pu)}.door.pk::after{background:var(--pk)}
+.door b,.door span{position:relative;display:block;padding:0 18px}.door b{font-size:22px;margin-top:92px}.door span{font-size:14px;color:#ddd6f3;margin:4px 0 16px}
+a.quest{display:block;text-decoration:none;color:inherit}a.quest:hover .mu{color:#fff}
+.today{max-width:none}.quest{max-width:none}
+/* quest, collections, memories, gallery */
+h2{font-size:22px;margin:28px 0 8px}
+.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:14px}.chap .bar{margin-top:6px}
+.tile{display:flex;flex-direction:column;gap:6px;min-height:120px}.tile img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.tile.hunt{opacity:.55}.tile.hunt b{color:#c4b5fd}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:18px}
+.ctile{display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:1;border-radius:18px;padding:20px;text-decoration:none;color:#fff;border:1px solid var(--line);background:var(--card)}
+.ctile b{font-size:22px;line-height:1.15}.ctile span{color:#ddd6f3;margin-top:4px}.ctile p{color:var(--mu);margin:8px 0 0}
+.ctile.t0{background:radial-gradient(120% 90% at 20% 10%,rgba(139,92,246,.45),var(--card) 60%)}.ctile.t1{background:radial-gradient(120% 90% at 80% 10%,rgba(236,72,153,.4),var(--card) 60%)}
+.ctile.t2{background:radial-gradient(120% 90% at 20% 90%,rgba(63,210,230,.3),var(--card) 60%)}.ctile.t3{background:radial-gradient(120% 90% at 80% 90%,rgba(245,215,110,.3),var(--card) 60%)}
+.ctile:hover{border-color:var(--pu)}
+.story{max-width:68ch}.story p{font-size:18px;line-height:1.7;color:#ddd6f3}
+.gal2{columns:3;column-gap:12px;margin-top:16px}.gal2 figure{margin:0 0 12px;break-inside:avoid}.gal2 img{width:100%;border-radius:12px;border:1px solid var(--line);display:block;filter:grayscale(.35)}.gal2 img:hover{filter:none}.gal2 figcaption{font-size:13px;color:var(--mu);margin-top:4px}
+@media(max-width:700px){.hero.home{grid-template-columns:1fr}.roomcol{align-items:stretch}.doors{grid-template-columns:1fr}.gal2{columns:2}}
+@media(max-width:900px){nav{gap:12px;font-size:14px}}
