@@ -119,15 +119,45 @@
     if (!i) return notFound();
     document.title = i.title + " · 23 Games Museum";
     var sh = i.shelf && D.cols[i.shelf.id], t = D.stories[id];
+    var ed = i.edition && i.edition !== "Standard" ? esc(i.ce || i.edition) : "";
+    var det = [i.year, i.publisher].concat(i.contents ? [].concat(i.contents).join(" · ") : []).filter(Boolean).map(esc).join(" · ");
     app.innerHTML = '<p class="sm"><a href="' + (sh ? "/shelf/" + esc(sh.id) : "/shelves") + '" data-link>‹ ' + esc(sh ? sh.name : "Shelves") + "</a></p>" +
       '<div class="plaque"><div>' + (i.img ? '<img src="/img/' + esc(i.id) + '.jpg" alt="' + esc(i.title) + '">' : '<div class="ph">Photograph coming soon</div>') + "</div><div>" +
-      "<h1>" + esc(i.title) + "</h1><div class=\"mu\">" + itemLine(i) + "</div>" +
-      (i.status === "hunting" ? '<p><span class="chip">Still to find</span></p>' : "") +
-      (i.flags.grail ? '<span class="chip gold">Holy Grail</span>' : "") + (i.flags.sealed ? '<span class="chip">Sealed</span>' : "") +
+      '<div class="label"><div class="lk">' + esc([i.platform, i.region].filter(Boolean).join(" · ")) + (i.flags.grail ? " · Holy Grail" : "") + "</div>" +
+      "<h1>" + esc(i.title) + "</h1>" + (ed ? '<div class="led">' + ed + "</div>" : "") +
+      (i.status === "hunting" ? '<p class="lp">Still to find. This one is not on our shelves yet.</p>' : "") +
       (i.sentence ? '<p class="sentence">' + esc(i.sentence) + "</p>" : "") +
+      (det || i.flags.sealed ? '<div class="ld">' + det + (i.flags.sealed ? (det ? " · " : "") + '<b class="gd">Sealed</b>' : "") + "</div>" : "") +
+      '<div class="ln">#' + esc(i.id) + " · 23gamesdigital.com/i/" + esc(i.id) + "</div></div>" +
       (t ? '<div class="card" style="margin-top:16px"><b>The game’s tale</b>' + (t.rarity && t.rarity.note ? '<p class="sm">' + esc(t.rarity.note) + "</p>" : "") +
         (t.origin ? '<p class="sm">' + esc(t.origin) + "</p>" : "") + (t.reached ? '<p class="sm">' + esc(t.reached) + "</p>" : "") + "</div>" : "") +
-      '<p class="mu sm" style="margin-top:18px">Piece ' + esc(i.id) + " · 23gamesdigital.com/i/" + esc(i.id) + "</p></div></div>";
+      '<div class="card memory" style="margin-top:16px"><b>Share your memory</b>' +
+      '<p class="sm mu">Did you play this one? Tell us where, when and who was with you. We read every memory; the ones we can share will appear on this plaque. Nothing is posted automatically.</p>' +
+      '<form id="mf" name="memory" method="post">' +
+      '<input type="hidden" name="form-name" value="memory"><input type="hidden" name="item" value="' + esc(i.id) + '">' +
+      '<p class="hp"><label>Leave empty <input name="bot-field"></label></p>' +
+      '<label>Your memory<textarea name="memory" rows="4" required maxlength="1500"></textarea></label>' +
+      '<div class="two"><label>Name or nickname<input name="nick" maxlength="60"></label><label>City<input name="city" maxlength="60"></label></div>' +
+      '<div class="two"><label>Year it happened<input name="year" inputmode="numeric" maxlength="4"></label><label>Email, only if you want a reply<input name="email" type="email" maxlength="120"></label></div>' +
+      '<button class="cta" type="submit">Send my memory</button><p class="sm mu" id="mm" role="status"></p></form></div>' +
+      "</div></div>";
+    wireMemory();
+  }
+
+  /* the one thing a visitor can send: a memory, posted to the Netlify Form "memory" (static twin in index.html); it is never stored in this page */
+  function wireMemory() {
+    var f = document.getElementById("mf"), msg = document.getElementById("mm");
+    if (!f) return;
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var btn = f.querySelector("button"); btn.disabled = true; msg.textContent = "Sending…";
+      var body = new URLSearchParams(new FormData(f)).toString();
+      var opts = { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body };
+      fetch("/", opts).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        f.innerHTML = '<p><b>Thank you.</b> Your memory has reached the museum. If we can share it, it will appear on this plaque.</p>';
+      }).catch(function () { btn.disabled = false; msg.textContent = "That did not go through. Please try again in a moment."; });
+    });
   }
 
   function notFound() {
