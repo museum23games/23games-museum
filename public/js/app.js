@@ -23,29 +23,87 @@
   /* ---- search: client-side over items.json; nothing is stored or sent anywhere ---- */
   var IDX = null, PLAT = { ps1: "PlayStation", psx: "PlayStation", ps2: "PlayStation 2", ps3: "PlayStation 3", ps4: "PlayStation 4", ps5: "PlayStation 5", psp: "PSP", vita: "PS Vita", psvita: "PS Vita" };
   var norm = function (t) { return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim(); };
+  /* what people type: abbreviations, digits for Roman numerals (and back), words run together, small typos */
+  var ALIAS = { gta: "grand theft auto", pes: "pro evolution soccer", ff: "final fantasy", re: "resident evil", mgs: "metal gear solid", gow: "god of war", gt: "gran turismo",
+    kh: "kingdom hearts", mk: "mortal kombat", cod: "call of duty", dmc: "devil may cry", tlou: "the last of us", nfs: "need for speed", tmnt: "teenage mutant ninja turtles", sh: "silent hill", fifa: "fifa" };
+  var ROMAN = ["", "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv", "xv", "xvi", "xvii", "xviii", "xix", "xx"];
+  function variants(t) {
+    var v = [t], n = /^\d{1,2}$/.test(t) ? +t : 0, r = ROMAN.indexOf(t);
+    if (n >= 1 && n <= 20) v.push(ROMAN[n]);
+    if (r > 1 && t !== "v" && t !== "x") v.push(String(r));
+    return v;
+  }
+  var VOC = null;
   function index() {
-    if (!IDX) IDX = D.items.map(function (i) { return { i: i, n: " " + norm(i.title + " " + (i.ce || "")) + " ", t: norm(i.title) }; });
+    if (!IDX) {
+      VOC = {};
+      IDX = D.items.map(function (i) {
+        var t = norm(i.title); t.split(" ").forEach(function (w) { if (w.length > 2) VOC[w] = (VOC[w] || 0) + 1; });
+        return { i: i, n: " " + norm(i.title + " " + (i.ce || "")) + " ", t: t, c: t.replace(/ /g, "") };
+      });
+    }
     return IDX;
   }
-  function find(q, max) {
-    var toks = norm(q).split(" ").filter(Boolean), plat = null;
-    toks = toks.filter(function (t) { if (PLAT[t]) { plat = PLAT[t]; return false; } return true; });
-    if (!toks.length) return [];
-    var whole = toks.join(" "), out = [];
+  function dist(a, b, lim) {   /* edit distance, stops once it passes lim */
+    if (Math.abs(a.length - b.length) > lim) return lim + 1;
+    var p = [], c, i, j, m;
+    for (j = 0; j <= b.length; j++) p[j] = j;
+    for (i = 1; i <= a.length; i++) {
+      c = [i]; m = i;
+      for (j = 1; j <= b.length; j++) { c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); if (c[j] < m) m = c[j]; }
+      if (m > lim) return lim + 1; p = c;
+    }
+    return p[b.length];
+  }
+  function correct(toks) {   /* fix words that start no title word; null if nothing could be fixed */
+    var words = Object.keys(VOC), changed = false;
+    var out = toks.map(function (t) {
+      if (t.length < 3 || /^\d+$/.test(t) || words.some(function (w) { return w.indexOf(t) === 0; })) return t;
+      var lim = t.length > 6 ? 2 : 1, best = null, bd = 9;
+      words.forEach(function (w) { var d = dist(t, w, lim); if (d <= lim && (d < bd || (d === bd && VOC[w] > VOC[best]))) { best = w; bd = d; } });
+      if (best) { changed = true; return best; }
+      return t;
+    });
+    return changed ? out : null;
+  }
+  function run(toks, plat) {
+    var whole = toks.join(" "), wholeV = toks.map(function (t) { return variants(t)[1] || t; }).join(" "), compact = whole.replace(/ /g, ""), out = [];
+    var anyW = function (x, t) { return variants(t).some(function (v, k) { return x.n.indexOf(k ? " " + v + " " : " " + v) >= 0; }); };   /* what was typed may start a word; its Roman/Arabic twin must be the whole word */
+    var anyC = function (x, t) { return /^\d+$/.test(t) ? anyW(x, t) : variants(t).some(function (v) { return x.n.indexOf(v) >= 0; }); };
     index().forEach(function (x) {
       if (plat && x.i.platform !== plat) return;
       var s = 0;
-      if (x.t === whole) s = 100; else if (x.t.indexOf(whole) === 0) s = 80;
-      else if (toks.every(function (t) { return x.n.indexOf(" " + t) >= 0; })) s = 60;
-      else if (toks.every(function (t) { return x.n.indexOf(t) >= 0; })) s = 40;
+      if (x.t === whole || x.t === wholeV) s = 100; else if (x.t.indexOf(whole) === 0 || x.t.indexOf(wholeV) === 0) s = 60;   /* a title that starts with it ranks level with one that has it inside: owned and photographed first, then the newer game */
+      else if (toks.every(function (t) { return anyW(x, t); })) s = 60;
+      else if (toks.every(function (t) { return anyC(x, t); })) s = 40;
+      if (compact.length > 4 && x.c.indexOf(compact) >= 0) s = Math.max(s, 60);   /* "spiderman" finds "Spider-Man" */
       if (!s) return;
       if (x.i.status === "owned") s += 5;
       if (!x.i.edition || x.i.edition === "Standard") s += 1;
       if (x.i.img) s += 8; if (x.i.flags.grail) s += 6; if (D.stories[x.i.id]) s += 4;   /* ties go to the plaque with the most to show */
-      out.push([s - Math.min(x.t.length, 60) / 100, x.i]);
+      out.push([s, x.i, x.t.length]);
     });
-    out.sort(function (a, b) { return b[0] - a[0] || a[1].id.localeCompare(b[1].id); });
-    return out.slice(0, max || 8).map(function (r) { return r[1]; });
+    out.sort(function (a, b) { return b[0] - a[0] || String(b[1].year).localeCompare(String(a[1].year)) || a[2] - b[2] || a[1].id.localeCompare(b[1].id); });   /* equal matches: the newer game first, then the shorter title */
+    return out;
+  }
+  function find(q, max) {
+    var toks = [], plat = null, res;
+    norm(q).split(" ").filter(Boolean).forEach(function (t) {
+      var m = /^([a-z]+)(\d+)$/.exec(t);   /* "ff7" is "ff 7" */
+      if (m && ALIAS[m[1]]) { toks = toks.concat(ALIAS[m[1]].split(" "), [m[2]]); return; }
+      if (PLAT[t]) plat = PLAT[t]; else toks = toks.concat(ALIAS[t] ? ALIAS[t].split(" ") : [t]);
+    });
+    if (!toks.length) return [];
+    index(); res = run(toks, plat);
+    var fix = null;
+    if (!res.length) { fix = correct(toks); if (fix) res = run(fix, plat); }
+    var seen = {}, list = [];   /* the same game twice on one platform takes one slot (its other edition is on the shelf) */
+    for (var k = 0; k < res.length && list.length < (max || 8); k++) {
+      var it = res[k][1], key = norm(it.title) + "|" + it.platform + "|" + (it.edition || "");
+      if (seen[key]) continue; seen[key] = 1; list.push(it);
+    }
+    list.fix = res.length && fix ? fix.join(" ") : null;
+    return list;
   }
   function wireSearch() {
     var box = document.getElementById("hero-search"), res = document.getElementById("sr"), cur = -1, list = [];
@@ -53,12 +111,12 @@
     var draw = function () {
       var q = box.value.trim();
       if (!q) { res.innerHTML = ""; return; }
-      list = find(q, 8); cur = list.length ? 0 : -1;
-      res.innerHTML = list.length ? list.map(function (i, k) {
+      list = find(q, 10); cur = list.length ? 0 : -1;
+      res.innerHTML = list.length ? (list.fix ? '<div class="hit none sm mu">Showing results for “' + esc(list.fix) + '”</div>' : "") + list.map(function (i, k) {
         return '<a class="hit' + (k === 0 ? " on" : "") + '" href="/i/' + esc(i.id) + '" data-link><b>' + esc(i.title) + '</b><span class="sm mu">' + itemLine(i) + (i.status === "hunting" ? " · still to find" : "") + "</span></a>";
       }).join("") : '<div class="hit none sm mu">No piece with that name yet. Try fewer words, or a platform such as ps2.</div>';
     };
-    var mark = function () { [].forEach.call(res.querySelectorAll(".hit"), function (a, k) { a.classList.toggle("on", k === cur); }); };
+    var mark = function () { [].forEach.call(res.querySelectorAll(".hit:not(.none)"), function (a, k) { a.classList.toggle("on", k === cur); }); };
     box.addEventListener("input", draw);
     box.addEventListener("keydown", function (e) {
       if (e.key === "ArrowDown" && list.length) { e.preventDefault(); cur = (cur + 1) % list.length; mark(); }
