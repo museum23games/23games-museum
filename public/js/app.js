@@ -258,6 +258,7 @@
   function route() {
     if (!D) return;
     var p = location.pathname.replace(/\/+$/, "") || "/", m, q = new URLSearchParams(location.search);
+    if ((m = /^\/item\/(\d{5})$/.exec(p))) { history.replaceState(null, "", "/i/" + m[1]); p = "/i/" + m[1]; }   /* the older QR address from earlier notes: one address, /i/<id> */
     if (p === "/index.html" || p === "/museum" || p === "/museum/index.html") { history.replaceState(null, "", "/"); p = "/"; }   /* the old installed app opens /index.html */
     if (p === "/") home();
     else if (p === "/shelves") shelves();
