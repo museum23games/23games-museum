@@ -226,6 +226,7 @@
   function route() {
     if (!D) return;
     var p = location.pathname.replace(/\/+$/, "") || "/", m, q = new URLSearchParams(location.search);
+    if (p === "/index.html" || p === "/museum" || p === "/museum/index.html") { history.replaceState(null, "", "/"); p = "/"; }   /* the old installed app opens /index.html */
     if (p === "/") home();
     else if (p === "/shelves") shelves();
     else if ((m = /^\/shelf\/([A-Za-z0-9_-]+)$/.exec(p))) shelf(m[1], parseInt(q.get("page"), 10) || 1);
