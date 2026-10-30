@@ -85,3 +85,4 @@ a.card:hover{border-color:var(--pu)}.card b{font-size:17px}
 .lp{margin:6px 0}
 .pc-read{display:none}
 @media(max-width:700px){.pc-read{display:block;margin-top:12px}.pc-read .sentence{font-size:19px;margin:0 0 8px}}
+.pc-emb img{width:100%;height:100%;object-fit:contain;border-radius:calc(10*var(--u))}

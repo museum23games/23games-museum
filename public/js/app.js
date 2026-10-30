@@ -216,7 +216,7 @@
       '<h1 class="pc-title" id="pc-title"><span>' + esc(i.title) + "</span></h1>" + (ed ? '<div class="pc-ed" id="pc-ed">' + esc(ed) + "</div>" : "") +
       (i.sentence ? '<p class="pc-sent">' + esc(i.sentence) + "</p>" : "") + '<div class="pc-rule"></div>' +
       (det ? '<div class="pc-det">' + det + "</div>" : "") + (cont ? '<div class="pc-cont">' + cont + "</div>" : "") + (i.flags.sealed ? '<div class="pc-seal">Sealed</div>' : "") +
-      '<div class="pc-emb"><span class="pc-2">2</span><span class="pc-3">3</span></div><div class="pc-no">#' + esc(i.id) + '</div><div class="pc-cap">THE LIVING PLAQUE</div>' +
+      '<div class="pc-emb">' + (i.emblem && i.emblem.indexOf("23g.") !== 0 ? '<img src="/img/emblems/' + esc(i.emblem) + '" alt="">' : '<span class="pc-2">2</span><span class="pc-3">3</span>') + '</div><div class="pc-no">#' + esc(i.id) + '</div><div class="pc-cap">THE LIVING PLAQUE</div>' +
       '<footer class="pc-url">23gamesdigital.com</footer><footer class="pc-tag">ONE COLLECTION. ONE STORY. INFINITE PASSION.</footer><i class="pc-c1"></i><i class="pc-c2"></i></article>' +
       '<div class="pc-read">' + (i.sentence ? '<p class="sentence">' + esc(i.sentence) + "</p>" : "") + ((det || cont || i.flags.sealed) ? '<p class="mu sm">' + [det, cont, i.flags.sealed ? "Sealed" : ""].filter(Boolean).join("<br>") + "</p>" : "") + "</div></div>";   /* phones: the card's small print, readable */
   }
