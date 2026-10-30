@@ -184,11 +184,21 @@
     if (!i) return notFound();
     document.title = i.title + " · 23 Games Museum";
     var sh = i.shelf && D.cols[i.shelf.id], t = D.stories[id];
+    var shelfLink = i.status === "hunting" ? '<a class="pm" href="/shelves" data-link><b>Still to find</b><span class="sm mu">This one is not on our shelves yet. It is on the hunt list.</span></a>'
+      : sh ? '<a class="pm" href="/shelf/' + esc(sh.id) + '" data-link><b>See it on the shelf</b><span class="sm mu">' + esc(sh.name) + (i.flags.grand ? " · also in the Grand Hall" : "") + "</span></a>" : "";
+    var yt = (i.links || []).filter(function (l) { return /youtu\.?be/.test(l.url); })[0], ytId = yt && (/[?&]v=([\w-]{6,})/.exec(yt.url) || /youtu\.be\/([\w-]{6,})/.exec(yt.url) || [])[1];
+    var links = (i.links || []).filter(function (l) { return l !== yt; }).map(function (l) { return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || host(l.url)) + "</a>"; });
+    links.push('<a href="https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(i.title + " video game") + '" target="_blank" rel="noopener">Wikipedia</a>');
+    links.push('<a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(i.title + " " + i.platform) + '" target="_blank" rel="noopener">YouTube</a>');
     app.innerHTML = '<p class="sm"><a href="' + (sh ? "/shelf/" + esc(sh.id) : "/shelves") + '" data-link>‹ ' + esc(sh ? sh.name : "Shelves") + "</a></p>" +
-      (i.status === "hunting" ? '<p class="lp mu">Still to find. This one is not on our shelves yet.</p>' : "") + card(i) +
-      '<div class="plaque"><div class="gal">' + (i.img ? gallery(i) : '<div class="ph">Photograph coming soon</div>') + "</div><div>" +
+      '<div class="plaque"><div><div class="gal">' + (i.img ? gallery(i) : '<div class="ph">Photograph coming soon</div>') + "</div>" +
+      '<div class="pmenu">' + shelfLink +
+      (ytId ? '<div class="pm trailer" id="trailer" data-yt="' + esc(ytId) + '"><img src="https://i.ytimg.com/vi/' + esc(ytId) + '/hqdefault.jpg" alt="" loading="lazy"><b>▶ ' + esc(yt.label || "Trailer") + '</b><span class="sm mu">Plays here, from YouTube</span></div>' : "") +
+      '<div class="pm links"><b>Links</b><span class="sm">' + links.join(" · ") + "</span></div></div></div>" +
+      "<div>" + card(i) +
       (t ? '<div class="card" style="margin-top:16px"><b>The game’s tale</b>' + (t.rarity && t.rarity.note ? '<p class="sm">' + esc(t.rarity.note) + "</p>" : "") +
         (t.origin ? '<p class="sm">' + esc(t.origin) + "</p>" : "") + (t.reached ? '<p class="sm">' + esc(t.reached) + "</p>" : "") + "</div>" : "") +
+      '<div class="card" style="margin-top:16px"><b>Memories shared</b><p class="sm mu">No memory shared on this plaque yet. Yours can be the first.</p></div>' +
       '<div class="card memory" style="margin-top:16px"><b>Share your memory</b>' +
       '<p class="sm mu">Did you play this one? Tell us where, when and who was with you. We read every memory; the ones we can share will appear on this plaque. Nothing is posted automatically.</p>' +
       '<form id="mf" name="memory" method="post">' +
@@ -200,7 +210,12 @@
       '<button class="cta" type="submit">Send my memory</button><p class="sm mu" id="mm" role="status"></p></form></div>' +
       "</div></div>";
     wireMemory(); fitCard();
+    var tr = document.getElementById("trailer");
+    if (tr) tr.addEventListener("click", function () {   /* nothing from YouTube loads until the visitor asks for it */
+      tr.outerHTML = '<div class="pm trailer on"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(tr.getAttribute("data-yt")) + '?autoplay=1&rel=0" title="Trailer" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>';
+    });
   }
+  var host = function (u) { return String(u).replace(/^https?:\/\/(www\.)?/, "").split("/")[0]; };
 
   /* ---- the plaque is the card: the back of the physical card (CR80, 85.6 x 54 mm), drawn from the museum's data on the same 1012 x 638 grid as card.py.
      Where the printed card has the QR code, the page has the 23 emblem (you are already on the plaque). Units: --u is one grid pixel. ---- */

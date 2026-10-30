@@ -86,3 +86,13 @@ a.card:hover{border-color:var(--pu)}.card b{font-size:17px}
 .pc-read{display:none}
 @media(max-width:700px){.pc-read{display:block;margin-top:12px}.pc-read .sentence{font-size:19px;margin:0 0 8px}}
 .pc-emb img{width:100%;height:100%;object-fit:contain;border-radius:calc(10*var(--u))}
+/* plaque page: photos left, the plaque right, the same width */
+.plaque{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.plaque .pc-wrap{max-width:none;margin:0 0 8px}
+.pmenu{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.pm{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;text-decoration:none;color:inherit}.pm b{display:block}a.pm:hover{border-color:var(--pu)}
+.pm.links .sm a{color:#c4b5fd}
+.pm.trailer{position:relative;cursor:pointer;padding:0;overflow:hidden;aspect-ratio:16/9;background:#000}.pm.trailer img{width:100%;height:100%;object-fit:cover;opacity:.7;display:block}
+.pm.trailer b,.pm.trailer span{position:absolute;left:16px}.pm.trailer b{bottom:30px;font-size:18px;text-shadow:0 1px 6px #000}.pm.trailer span{bottom:12px}
+.pm.trailer.on iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+@media(max-width:700px){.plaque{grid-template-columns:1fr}.plaque>div:first-child{order:2}}
