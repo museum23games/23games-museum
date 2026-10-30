@@ -126,3 +126,27 @@ h2{font-size:22px;margin:28px 0 8px}
 .gal2{columns:3;column-gap:12px;margin-top:16px}.gal2 figure{margin:0 0 12px;break-inside:avoid}.gal2 img{width:100%;border-radius:12px;border:1px solid var(--line);display:block;filter:grayscale(.35)}.gal2 img:hover{filter:none}.gal2 figcaption{font-size:13px;color:var(--mu);margin-top:4px}
 @media(max-width:700px){.hero.home{grid-template-columns:1fr}.roomcol{align-items:stretch}.doors{grid-template-columns:1fr}.gal2{columns:2}}
 @media(max-width:900px){nav{gap:12px;font-size:14px}}
+/* home: the hero wider on the left, latest to join on the right; three doors; game of the day as the Curator shows it */
+.hero.home{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.side{display:flex;flex-direction:column;gap:2px}.side .row{text-decoration:none;color:inherit;padding:8px 0}.side .row:hover b{color:#fff;text-decoration:underline}.side .quiet{margin-top:10px;color:var(--mu);text-decoration:none;align-self:flex-end}.side .quiet:hover{color:#fff}
+.doors.three{grid-template-columns:1fr 1fr 1fr}.door.gd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--gold)}
+.gotd{position:relative;margin-top:22px;border-radius:18px;overflow:hidden;border:1px solid var(--line);background-size:cover;background-position:center;background-color:var(--card)}
+.gotd::before{content:"";position:absolute;inset:0;background:rgba(13,11,20,.78);backdrop-filter:blur(26px)}
+.gotd-in{position:relative;display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:24px;padding:22px;align-items:center}
+.gotd-img img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;display:block;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.gotd-kick{font-size:12px;letter-spacing:.2em;color:var(--pk);font-weight:700;display:flex;align-items:center;gap:8px}.gotd-kick .mu{color:#c4b5fd;font-weight:600}
+.rings{display:inline-flex;align-items:center}.rings i{width:16px;height:12px;border-radius:50%;border:2.5px solid var(--pu);display:inline-block}.rings i:last-child{border-color:var(--pk);margin-left:-6px}
+.gotd h2{font-size:clamp(26px,3.4vw,38px);margin:6px 0 4px;color:#e9ddff}
+.gotd-line{display:flex;align-items:center;gap:10px}.gotd-line .plat{height:22px;width:auto}
+.gotd .sentence{font-size:19px;margin:12px 0}.gotd-desc{font-family:Georgia,"Times New Roman",serif;font-size:17px;line-height:1.5;color:#ddd6f3;margin:12px 0}.gotd-desc a{font-family:system-ui,sans-serif;color:var(--mu)}
+.gotd-critic b{font-size:30px;margin-right:4px}.gotd-chips{margin:12px 0 14px}.gotd-chips .chip{margin:0 6px 6px 0;text-decoration:none}
+.gotd-btn{display:flex;gap:10px;flex-wrap:wrap}.gotd-btn .cta{margin:0}.cta.ghost{background:var(--card);border:1px solid var(--line)}
+/* the Quest map */
+.qmap{width:100%;height:auto;display:block;border-radius:22px;box-shadow:0 12px 40px rgba(20,10,60,.5);margin:12px 0 10px}
+.qn{cursor:pointer}.qdot{fill:#1b1438;stroke:#a78bfa;stroke-width:3}.qn:hover .qdot{stroke:#fff;stroke-width:4}.qn.done .qdot{fill:#2a1f5c;stroke:#f5d76e}
+.qnum{fill:#ece9f7;font:800 15px system-ui,sans-serif;text-anchor:middle;pointer-events:none}
+.qlab{fill:#ece9f7;font:700 13px system-ui,sans-serif;text-anchor:middle;letter-spacing:.04em;paint-order:stroke;stroke:#0d0b14;stroke-width:4px}
+.qpct{fill:#f5d76e;font:700 12px system-ui,sans-serif;text-anchor:middle;paint-order:stroke;stroke:#0d0b14;stroke-width:3px}
+.qcmp{fill:#ece9f7;font:700 13px system-ui,sans-serif;text-anchor:middle}.qbrand{fill:#fff;font:800 22px system-ui,sans-serif;letter-spacing:.06em}.qbrand2{fill:#c4b5fd;font:600 14px system-ui,sans-serif;letter-spacing:.1em}.qflag{font-size:34px}
+.memory .results{margin:4px 0 10px}
+@media(max-width:700px){.hero.home{grid-template-columns:1fr}.doors.three{grid-template-columns:1fr}.gotd-in{grid-template-columns:1fr}.gotd-img{max-width:200px}}

@@ -129,31 +129,48 @@
   function home() {
     document.title = "23 Games Museum";
     var ch = (D.quests.chapters || []).filter(function (c) { return c.id === "ps2-us"; })[0], t = today();
+    var latest = D.items.filter(function (i) { return i.status === "owned"; }).sort(function (a, b) { return b.id.localeCompare(a.id); }).slice(0, 5);
     app.innerHTML = '<section class="hero home"><div><div class="kick">Day ' + num(t.day) + ' of PlayStation</div><h1>Every game has a plaque. Every plaque can carry your memory.</h1>' +
       '<p>Search a game you played and find its plaque.</p>' +
       '<div class="search"><input id="hero-search" type="search" placeholder="Search a title, for example Martha Is Dead" aria-label="Search the museum" autocomplete="off"><div id="sr" class="results"></div></div></div>' +
-      '<div class="roomcol">' + room() + '<a class="sm quiet" href="/gallery" data-link>The gallery: the rooms, the shelves, the cabinets ›</a></div></section>' +
-      '<div class="doors"><a class="door pu" href="/shelves" data-link style="background-image:url(/img/site/photo3.jpg)"><b>Walk the shelves</b><span>Every platform, the way the real shelves stand</span></a>' +
-      '<a class="door pk" href="/collections" data-link style="background-image:url(/img/site/welcome-wall.jpg)"><b>Feel the collections</b><span>Pieces from every shelf, kept together</span></a></div>' +
-      (t.item ? '<a class="card today" href="/i/' + esc(t.item.id) + '" data-link>' + (t.item.img ? '<img src="/img/' + esc(t.item.id) + '.jpg" alt="">' : "") +
-        '<div><div class="kick">Today’s plaque</div><b>' + esc(t.item.title) + '</b><div class="sm mu">' + itemLine(t.item) + "</div></div></a>" : "") +
+      '<div class="side"><div class="kick">Latest to join</div>' + latest.map(function (i) { return '<a class="row" href="/i/' + esc(i.id) + '" data-link><span class="pos">#' + esc(i.id) + "</span><div><b>" + esc(i.title) + '</b><div class="sm mu">' + itemLine(i) + "</div></div></a>"; }).join("") +
+      '<a class="sm quiet" href="/gallery" data-link>The gallery: the rooms, the shelves, the cabinets ›</a></div></section>' +
+      '<div class="doors three"><a class="door pu" href="/shelves" data-link style="background-image:url(/img/site/photo3.jpg)"><b>Walk the shelves</b><span>Every platform, the way the real shelves stand</span></a>' +
+      '<a class="door pk" href="/collections" data-link style="background-image:url(/img/site/welcome-wall.jpg)"><b>Feel the collections</b><span>Pieces from every shelf, kept together</span></a>' +
+      '<a class="door gd" href="/memories" data-link style="background-image:url(/img/site/photo5.jpg)"><b>Memories we love</b><span>The Director’s, and the ones you leave on a plaque</span></a></div>' +
+      (t.item ? todayCard(t.item) : "") +
       (ch ? '<a class="quest" href="/quest" data-link><div class="sm"><b>' + esc(ch.land) + "</b> · " + num(ch.have) + " of " + num(ch.goal) + ' found <span class="mu">· the Quest ›</span></div>' +
         '<div class="bar"><i style="width:' + Math.round(100 * ch.have / ch.goal) + '%"></i></div></a>' : "") +
       '<p class="sm mu keepers">Soon: Keepers, the people who keep a game alive with us.</p>';
     wireSearch();
+    var an = document.getElementById("another"); if (an) an.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); SHIFT++; home(); window.scrollTo(0, document.querySelector(".gotd").offsetTop - 80); });
   }
 
-  /* the small room at two in the morning (from the vision): the television is the way into the memories */
+  /* Game of the day, the way the Curator shows it: the 23 Games kicker, the piece's photo, one line about it, the chips, two buttons */
+  function todayCard(i) {
+    var sh = i.shelf && D.cols[i.shelf.id], plat = PLATIMG[i.platform];
+    return '<section class="gotd"' + (i.img ? ' style="background-image:url(/img/' + esc(i.id) + '.jpg)"' : "") + '><div class="gotd-in">' +
+      (i.img ? '<a class="gotd-img" href="/i/' + esc(i.id) + '" data-link><img src="/img/' + esc(i.id) + '.jpg" alt=""></a>' : "") +
+      '<div><div class="gotd-kick"><span class="rings"><i></i><i></i></span> 23 GAMES <span class="mu">· TODAY’S PLAQUE</span></div><h2>' + esc(i.title) + "</h2>" +
+      '<div class="gotd-line">' + (plat ? '<img class="plat" src="/img/site/plat/' + plat + '.png" alt="' + esc(i.platform) + '">' : esc(i.platform)) + ' <span class="mu">' + esc([i.year, i.region, i.edition && i.edition !== "Standard" ? (i.ce || i.edition) : "Standard"].filter(Boolean).join(" · ")) + "</span></div>" +
+      (i.sentence ? '<p class="sentence">' + esc(i.sentence) + "</p>" : i.desc ? '<p class="gotd-desc">' + esc(i.desc.text) + (i.desc.url ? ' <a class="sm" href="' + esc(i.desc.url) + '" target="_blank" rel="noopener">' + esc(i.desc.src) + "</a>" : "") + "</p>" : "") +
+      (i.critic ? '<div class="gotd-critic"><b>' + i.critic + '</b><span class="mu">/100 critics</span></div>' : "") +
+      '<div class="gotd-chips"><span class="chip">#' + esc(i.id) + "</span>" + (sh ? '<a class="chip" href="/shelf/' + esc(sh.id) + '" data-link>On the ' + esc(sh.name) + " shelf</a>" : "") + '<span class="chip">1 of ' + num(D.quests.owned) + " in the museum</span></div>" +
+      '<div class="gotd-btn"><a class="cta" href="/i/' + esc(i.id) + '" data-link>See the plaque</a><a class="cta ghost" href="/" data-link id="another">Another game</a></div></div></div></section>';
+  }
+  var PLATIMG = { "PlayStation": "ps1", "PlayStation 2": "ps2", "PlayStation 3": "ps3", "PlayStation 4": "ps4", "PlayStation 5": "ps5", "PSP": "psp", "PS Vita": "psv", "Disney Infinity": "dis", "Lego Dimensions": "leg" };
+
+  /* the small room at two in the morning (from the vision), in the museum's colours: it opens the memories */
   function room() {
     return '<a class="room" href="/memories" data-link aria-label="Memories we love">' +
       '<svg viewBox="0 0 620 426" aria-hidden="true"><g stroke="rgba(236,233,226,.08)" stroke-width="2"><line x1="40" y1="70" x2="250" y2="70"/><line x1="40" y1="120" x2="250" y2="120"/><line x1="40" y1="170" x2="250" y2="170"/></g>' +
       '<g fill="rgba(236,233,226,.12)"><rect x="48" y="44" width="8" height="24"/><rect x="60" y="44" width="8" height="24"/><rect x="72" y="46" width="8" height="22"/><rect x="84" y="44" width="8" height="24"/><rect x="100" y="44" width="8" height="24"/><rect x="112" y="44" width="8" height="24"/><rect x="128" y="46" width="8" height="22"/><rect x="48" y="94" width="8" height="24"/><rect x="60" y="94" width="8" height="24"/><rect x="76" y="94" width="8" height="24"/><rect x="92" y="96" width="8" height="22"/><rect x="104" y="94" width="8" height="24"/><rect x="48" y="144" width="8" height="24"/><rect x="64" y="144" width="8" height="24"/><rect x="76" y="144" width="8" height="24"/></g>' +
-      '<rect x="230" y="110" width="200" height="150" rx="10" fill="#0b0d14" stroke="rgba(236,233,226,.18)" stroke-width="2"/><rect class="tvglow" x="244" y="124" width="172" height="122" rx="4" fill="#3fd2e6" opacity=".85"/>' +
+      '<rect x="230" y="110" width="200" height="150" rx="10" fill="#0b0d14" stroke="rgba(236,233,226,.18)" stroke-width="2"/><defs><linearGradient id="tvg" x1="0" x2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><rect class="tvglow" x="244" y="124" width="172" height="122" rx="4" fill="url(#tvg)" opacity=".85"/>' +
       '<defs><pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="2" fill="rgba(0,0,0,.18)"/></pattern></defs><rect x="244" y="124" width="172" height="122" rx="4" fill="url(#scan)"/>' +
-      '<text x="330" y="178" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="13" letter-spacing="2" fill="#06222a">MEMORIES</text><text x="330" y="198" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="13" letter-spacing="2" fill="#06222a">WE LOVE</text>' +
-      '<ellipse cx="330" cy="330" rx="200" ry="40" fill="rgba(63,210,230,.08)"/><path d="M300 262 C 280 300, 230 310, 200 340" fill="none" stroke="rgba(236,233,226,.25)" stroke-width="2"/><path d="M360 262 C 380 300, 430 310, 460 340" fill="none" stroke="rgba(236,233,226,.25)" stroke-width="2"/>' +
-      '<g class="pad1"><rect x="160" y="336" width="80" height="34" rx="14" fill="#1a1f2e" stroke="#f2a93b" stroke-width="2"/><circle cx="178" cy="353" r="4" fill="#f2a93b"/><circle cx="222" cy="353" r="4" fill="#f2a93b"/></g>' +
-      '<g class="pad2"><rect x="420" y="336" width="80" height="34" rx="14" fill="#1a1f2e" stroke="#f2a93b" stroke-width="2"/><circle cx="438" cy="353" r="4" fill="#f2a93b"/><circle cx="482" cy="353" r="4" fill="#f2a93b"/></g>' +
+      '<text x="330" y="178" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="13" letter-spacing="2" fill="#1a0b2e">MEMORIES</text><text x="330" y="198" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="13" letter-spacing="2" fill="#1a0b2e">WE LOVE</text>' +
+      '<ellipse cx="330" cy="330" rx="200" ry="40" fill="rgba(139,92,246,.10)"/><path d="M300 262 C 280 300, 230 310, 200 340" fill="none" stroke="rgba(236,233,226,.25)" stroke-width="2"/><path d="M360 262 C 380 300, 430 310, 460 340" fill="none" stroke="rgba(236,233,226,.25)" stroke-width="2"/>' +
+      '<g class="pad1"><rect x="160" y="336" width="80" height="34" rx="14" fill="#1a1230" stroke="#c9a227" stroke-width="2"/><circle cx="178" cy="353" r="4" fill="#c9a227"/><circle cx="222" cy="353" r="4" fill="#c9a227"/></g>' +
+      '<g class="pad2"><rect x="420" y="336" width="80" height="34" rx="14" fill="#1a1230" stroke="#c9a227" stroke-width="2"/><circle cx="438" cy="353" r="4" fill="#c9a227"/><circle cx="482" cy="353" r="4" fill="#c9a227"/></g>' +
       '<rect x="470" y="48" width="100" height="120" rx="4" fill="none" stroke="rgba(236,233,226,.14)" stroke-width="2"/><text x="520" y="124" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="800" font-size="46" fill="rgba(236,233,226,.22)" letter-spacing="-2">23</text>' +
       '<text x="330" y="36" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="11" letter-spacing="3" fill="#8d93a3">02:14 · SOMEONE’S SMALL ROOM</text></svg>' +
       '<div class="pass">if you lost, you <b>passed the controller</b></div></a>';
@@ -164,7 +181,7 @@
     document.title = "The Quest · 23 Games Museum";
     var q = D.quests, chs = (q.chapters || []).slice().sort(function (a, b) { return (b.have / b.goal) - (a.have / a.goal); });
     var latest = D.items.filter(function (i) { return i.status === "owned"; }).sort(function (a, b) { return b.id.localeCompare(a.id); }).slice(0, 8);
-    var next = D.items.filter(function (i) { return i.status === "hunting" && i.collections.indexOf("col_cur_ps2") >= 0; }).slice(0, 8);
+    var next = D.items.filter(function (i) { return i.status === "hunting" && i.platform === "PlayStation 2" && i.region === "USA"; }).slice(0, 8);
     app.innerHTML = '<h1>' + esc(q.name || "The Quest") + '</h1><p class="mu">' + esc(q.sub || "") + "</p>" +
       '<p><b>' + num(q.owned) + '</b> pieces on the shelves · <b>' + num(q.hunting) + "</b> still to find</p>" +
       '<div class="chapters">' + chs.map(function (c) {
@@ -172,8 +189,44 @@
           '</div><div class="bar"><i style="width:' + Math.round(100 * c.have / Math.max(1, c.goal)) + '%"></i></div></div>';
       }).join("") + "</div>" +
       '<h2>Latest to join</h2><div class="grid">' + latest.map(tile).join("") + "</div>" +
+      '<h2>The map of the Quest</h2><p class="sm mu">Every chapter is a land. The route runs from the first to the last; the flag is where the road ends for now.</p>' + questMap(q.chapters || []) +
       '<h2>What is next in the PS2 Kingdom</h2><p class="sm mu">The hunt list of the chapter we lead with. If you know where one of these is, tell us on its plaque.</p><div class="grid">' + next.map(tile).join("") + "</div>" +
       '<div class="card" style="margin-top:22px"><b>Help us in our quest</b><p class="sm mu">Every plaque has a place for your memory. If you know where a missing piece is, write it there. Keepers, the people who keep the museum alive with us, come later; nothing is for sale here.</p></div>';
+  }
+  /* the Quest map, as the Curator draws it: a winding route over islands, one land per chapter (ported from app72, in the museum's colours) */
+  var MAPLOGO = { "ps2-us": "ps2", "ps1-longbox": "ps1", "ps1-black": "ps1", "ps1-gh": "ps1", "eas-vita": "psv", "ps4-consoles": "ps4", "psp-black": "psp", "psp-fav": "psp", lego: "leg", disney: "dis", "ps5-all": "ps5", "ps4": "ps4", "ps4-only": "ps4", "ps4-rest": "ps4", "nba-elite": "ps3", "ps3-fav-br": "ps3", "ps3-fav-la": "ps3", "ps1-rest": "ps1" };
+  var ROMANNUM = function (n) { var t = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]], s = ""; t.forEach(function (p) { while (n >= p[0]) { s += p[1]; n -= p[0]; } }); return s; };   /* (ROMAN, the array, belongs to the search) */
+  function questMap(chs) {
+    var portrait = window.innerWidth < 700, n = chs.length, W = portrait ? 620 : 1200, H = portrait ? 1720 : 900, cols = portrait ? 3 : 6, rows = Math.ceil(n / cols), top = 190, bottom = H - 250;
+    var dx = (W - 200) / (cols - 1), dy = (bottom - top) / Math.max(1, rows - 1), pts = [];
+    for (var i = 0; i < n; i++) { var r = Math.floor(i / cols), c0 = i % cols, c = r % 2 ? cols - 1 - c0 : c0; pts.push([100 + c * dx + Math.sin(i * 2.3) * (portrait ? 22 : 30), top + r * dy + Math.cos(i * 1.7) * (portrait ? 26 : 32)]); }
+    var smooth = function (p, closed) {
+      var P = closed ? [p[p.length - 1]].concat(p, [p[0], p[1]]) : [p[0]].concat(p, [p[p.length - 1]]), d = "M" + P[1][0].toFixed(1) + "," + P[1][1].toFixed(1);
+      for (var k = 1; k < P.length - 2; k++) { var a = P[k - 1], b = P[k], cc = P[k + 1], e = P[k + 2]; d += " C" + (b[0] + (cc[0] - a[0]) / 6).toFixed(1) + "," + (b[1] + (cc[1] - a[1]) / 6).toFixed(1) + " " + (cc[0] - (e[0] - b[0]) / 6).toFixed(1) + "," + (cc[1] - (e[1] - b[1]) / 6).toFixed(1) + " " + cc[0].toFixed(1) + "," + cc[1].toFixed(1); }
+      return d + (closed ? "Z" : "");
+    };
+    var island = function (ps, seed) {
+      var cx = 0, cy = 0; ps.forEach(function (p) { cx += p[0] / ps.length; cy += p[1] / ps.length; });
+      var rx = Math.max.apply(null, [100].concat(ps.map(function (p) { return Math.abs(p[0] - cx) + 72; }))), ry = Math.max.apply(null, [88].concat(ps.map(function (p) { return Math.abs(p[1] - cy) + 74; }))), ring = [];
+      for (var k = 0; k < 14; k++) { var a = k / 14 * Math.PI * 2, w = 1 + 0.13 * Math.sin(k * 2.7 + seed) + 0.08 * Math.cos(k * 4.1 + seed * 1.3); ring.push([cx + Math.cos(a) * rx * w, cy + Math.sin(a) * ry * w]); }
+      return smooth(ring, true);
+    };
+    var isl = []; for (var j = 0; j < pts.length; j += 3) isl.push(island(pts.slice(j, j + 3), j));
+    var node = function (ch, k) {
+      var x = pts[k][0], y = pts[k][1], pct = Math.round(100 * ch.have / Math.max(1, ch.goal)), done = ch.have >= ch.goal && ch.goal > 0, rr = 25, lg = MAPLOGO[ch.id], short = ch.land.replace(/^The /, "");
+      return '<a href="/collections" data-link class="qn' + (done ? " done" : "") + '"><circle cx="' + x + '" cy="' + y + '" r="' + rr + '" class="qdot"/><text x="' + x + '" y="' + (y + 5) + '" class="qnum">' + (done ? "✓" : ROMANNUM(k + 1)) + "</text>" +
+        (lg ? '<image href="/img/site/plat/' + lg + '.png" x="' + (x - 22) + '" y="' + (y + rr + 6) + '" width="44" height="18" preserveAspectRatio="xMidYMid meet" opacity=".9"/>' : "") +
+        '<text x="' + x + '" y="' + (y + rr + (lg ? 40 : 22)) + '" class="qlab">' + esc(short.length > 24 ? short.slice(0, 23) + "…" : short) + '</text><text x="' + x + '" y="' + (y + rr + (lg ? 56 : 38)) + '" class="qpct">' + pct + "%</text></a>";
+    };
+    var last = pts[pts.length - 1];
+    return '<svg class="qmap" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="The map of the Quest"><defs><radialGradient id="qsea" cx="45%" cy="40%" r="80%"><stop offset="0" stop-color="#2a1e5c"/><stop offset=".55" stop-color="#1b1438"/><stop offset="1" stop-color="#0d0b14"/></radialGradient>' +
+      '<linearGradient id="qland" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2a7a"/><stop offset="1" stop-color="#2a1f5c"/></linearGradient><pattern id="qgrid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1"/></pattern></defs>' +
+      '<rect width="' + W + '" height="' + H + '" rx="22" fill="url(#qsea)"/><rect width="' + W + '" height="' + H + '" rx="22" fill="url(#qgrid)"/>' +
+      isl.map(function (d) { return '<path d="' + d + '" fill="url(#qland)" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity=".95"/><path d="' + d + '" fill="none" stroke="rgba(167,139,250,.16)" stroke-width="16"/>'; }).join("") +
+      '<path d="' + smooth(pts, false) + '" fill="none" stroke="rgba(245,215,110,.7)" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round"/>' +
+      '<g transform="translate(' + (W - 80) + ',84)" opacity=".85"><circle r="44" fill="rgba(13,11,20,.55)" stroke="#a78bfa" stroke-width="2"/><path d="M0,-40 L8,0 L0,40 L-8,0Z" fill="#ece9f7"/><path d="M-40,0 L0,8 L40,0 L0,-8Z" fill="#a78bfa"/><text y="-50" class="qcmp">N</text></g>' +
+      '<g transform="translate(' + (portrait ? 40 : 34) + "," + (H - 122) + ')"><rect width="270" height="92" rx="14" fill="rgba(13,11,20,.75)" stroke="rgba(167,139,250,.5)"/><image href="/img/site/plat/logo-mark.png" x="14" y="16" width="60" height="60" preserveAspectRatio="xMidYMid meet"/><text x="86" y="44" class="qbrand">23 GAMES</text><text x="86" y="68" class="qbrand2">The Quest</text></g>' +
+      chs.map(node).join("") + '<text x="' + last[0] + '" y="' + (last[1] - 46) + '" class="qflag">🏁</text></svg>';
   }
   function tile(i) {
     return '<a class="card tile' + (i.status === "hunting" ? " hunt" : "") + '" href="/i/' + esc(i.id) + '" data-link>' + (i.img ? '<img src="/img/' + esc(i.id) + '_t.jpg" alt="" loading="lazy" onerror="this.remove()">' : "") + "<b>" + esc(i.title) + '</b><div class="sm mu">' + itemLine(i) + (i.status === "hunting" ? " · still to find" : "") + "</div></a>";
@@ -204,13 +257,27 @@
     if (slug) {
       var m = ms.filter(function (x) { return x.slug === slug; })[0]; if (!m) return notFound();
       document.title = m.title + " · 23 Games Museum";
-      app.innerHTML = '<p class="sm"><a href="/memories" data-link>‹ Memories we love</a></p><div class="story"><div class="kick">' + esc(m.sub) + "</div><h1>" + esc(m.title) + "</h1>" + m.paragraphs.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
+      app.innerHTML = '<p class="sm"><a href="/memories" data-link>‹ Memories we love</a></p><div class="story"><div class="kick">From the Director</div><h1>' + esc(m.title) + "</h1>" + m.paragraphs.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
       return;
     }
     document.title = "Memories we love · 23 Games Museum";
-    app.innerHTML = '<h1>Memories we love</h1><p class="mu">The museum keeps the box on the shelf and the evening it was played. These are the founder’s own, first.</p>' +
-      '<div class="grid">' + ms.map(function (m) { return '<a class="card" href="/memory/' + esc(m.slug) + '" data-link><div class="kick">' + esc(m.sub) + "</div><b>" + esc(m.title) + '</b><p class="sm mu">' + esc((m.paragraphs[0] || "").slice(0, 140)) + "…</p></a>"; }).join("") + "</div>" +
-      '<p class="sm mu" style="margin-top:22px">Your memory belongs on the plaque of the game it happened with. Search the game, and write it there.</p>';
+    app.innerHTML = '<section class="hero home"><div><h1>Memories we love</h1><p>The museum keeps the box on the shelf and the evening it was played. The Director’s memories come first; yours go on the plaque of the game they happened with.</p></div><div class="roomcol">' + room() + "</div></section>" +
+      '<h2>Memories from the Director</h2><div class="grid">' + ms.map(function (m) { return '<a class="card" href="/memory/' + esc(m.slug) + '" data-link><div class="kick">From the Director</div><b>' + esc(m.title) + '</b><p class="sm mu">' + esc((m.paragraphs[0] || "").slice(0, 140)) + "…</p></a>"; }).join("") + "</div>" +
+      '<h2>Share your memory</h2><div class="card memory"><p class="sm mu">Which game was it? Start typing and pick it, or just write its name. We read every memory; the ones we can share will appear on that game’s plaque. Nothing is posted automatically.</p>' +
+      '<form id="mf" name="memory" method="post"><input type="hidden" name="form-name" value="memory"><input type="hidden" name="item" id="mf-item" value="">' +
+      '<p class="hp"><label>Leave empty <input name="bot-field"></label></p>' +
+      '<label>The game<input name="game" id="mf-game" autocomplete="off" required maxlength="120" placeholder="For example Tekken 3"></label><div id="mf-sr" class="results"></div>' +
+      '<label>Your memory<textarea name="memory" rows="4" required maxlength="1500"></textarea></label>' +
+      '<div class="two"><label>Name or nickname<input name="nick" maxlength="60"></label><label>City<input name="city" maxlength="60"></label></div>' +
+      '<div class="two"><label>Year it happened<input name="year" inputmode="numeric" maxlength="4"></label><label>Email, only if you want a reply<input name="email" type="email" maxlength="120"></label></div>' +
+      '<button class="cta" type="submit">Send my memory</button><p class="sm mu" id="mm" role="status"></p></form></div>';
+    wireMemory();
+    var g = document.getElementById("mf-game"), sr = document.getElementById("mf-sr"), hid = document.getElementById("mf-item");
+    g.addEventListener("input", function () {
+      hid.value = ""; var q = g.value.trim(); if (q.length < 2) { sr.innerHTML = ""; return; }
+      var list = find(q, 6); sr.innerHTML = list.map(function (i) { return '<a class="hit" href="#" data-id="' + esc(i.id) + '" data-t="' + esc(i.title) + '"><b>' + esc(i.title) + '</b><span class="sm mu">' + itemLine(i) + "</span></a>"; }).join("");
+      [].forEach.call(sr.querySelectorAll(".hit"), function (a) { a.addEventListener("click", function (e) { e.preventDefault(); g.value = a.getAttribute("data-t"); hid.value = a.getAttribute("data-id"); sr.innerHTML = ""; }); });
+    });
   }
   var GALLERY = [["welcome-room", "The room"], ["photo3", "The wall"], ["welcome-wall", "The cabinet"], ["photo1", "Shelves"], ["photo2", "Figures and boxes"], ["photo5", "Lights off"], ["photo4", "The corner"], ["photo6", "The cabinet again"], ["hero1", ""], ["hero2", ""], ["hero3", ""], ["hero4", ""], ["hero5", ""]];
   function galleryPage() {
@@ -222,11 +289,11 @@
   /* the day count and today's plaque are the same for every visitor: they depend only on the date */
   function today() {
     var d = new Date(), utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()), day = Math.floor((utc - Date.UTC(1994, 11, 3)) / 864e5);
-    var pool = D.items.filter(function (i) { return i.status === "owned" && (i.img || D.stories[i.id]); });
+    var pool = D.items.filter(function (i) { return i.status === "owned" && i.img; });   /* today's plaque always has the museum's own photo */
     if (!pool.length) pool = D.items.filter(function (i) { return i.status === "owned"; });
-    return { day: day + OFFSET, item: pool.length ? pool[day % pool.length] : null };
+    return { day: day + OFFSET, item: pool.length ? pool[(day + SHIFT) % pool.length] : null };
   }
-  var OFFSET = 0;
+  var OFFSET = 0, SHIFT = 0;   /* "Another game" moves SHIFT for this visit only: nothing is stored */
 
   function shelves() {
     document.title = "Shelves · 23 Games Museum";
