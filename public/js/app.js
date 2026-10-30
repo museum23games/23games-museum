@@ -172,6 +172,13 @@
       }).join("") + '<div class="pager">' + pg(page - 1, "‹ Previous", page <= 1) + "<span>" + page + " / " + pages + "</span>" + pg(page + 1, "Next ›", page >= pages) + "</div>";
   }
 
+  /* every photo of the piece, one under the other, all the same size: <id>.jpg first, then <id>_2.jpg, <id>_3.jpg ... */
+  function gallery(i) {
+    var n = i.imgs || 1, out = "";
+    for (var k = 1; k <= n; k++) out += '<img src="/img/' + esc(i.id) + (k > 1 ? "_" + k : "") + '.jpg" alt="' + esc(i.title) + (n > 1 ? ", photo " + k + " of " + n : "") + '"' + (k > 1 ? ' loading="lazy"' : "") + ">";
+    return out;
+  }
+
   function plaque(id) {
     var i = D.byId[id];
     if (!i) return notFound();
@@ -180,7 +187,7 @@
     var ed = i.edition && i.edition !== "Standard" ? esc(i.ce || i.edition) : "";
     var det = [i.year, i.publisher].concat(i.contents ? [].concat(i.contents).join(" · ") : []).filter(Boolean).map(esc).join(" · ");
     app.innerHTML = '<p class="sm"><a href="' + (sh ? "/shelf/" + esc(sh.id) : "/shelves") + '" data-link>‹ ' + esc(sh ? sh.name : "Shelves") + "</a></p>" +
-      '<div class="plaque"><div>' + (i.img ? '<img src="/img/' + esc(i.id) + '.jpg" alt="' + esc(i.title) + '">' : '<div class="ph">Photograph coming soon</div>') + "</div><div>" +
+      '<div class="plaque"><div class="gal">' + (i.img ? gallery(i) : '<div class="ph">Photograph coming soon</div>') + "</div><div>" +
       '<div class="label"><div class="lk">' + esc([i.platform, i.region].filter(Boolean).join(" · ")) + (i.flags.grail ? " · Holy Grail" : "") + "</div>" +
       "<h1>" + esc(i.title) + "</h1>" + (ed ? '<div class="led">' + ed + "</div>" : "") +
       (i.status === "hunting" ? '<p class="lp">Still to find. This one is not on our shelves yet.</p>' : "") +
