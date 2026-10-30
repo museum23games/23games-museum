@@ -184,16 +184,9 @@
     if (!i) return notFound();
     document.title = i.title + " · 23 Games Museum";
     var sh = i.shelf && D.cols[i.shelf.id], t = D.stories[id];
-    var ed = i.edition && i.edition !== "Standard" ? esc(i.ce || i.edition) : "";
-    var det = [i.year, i.publisher].concat(i.contents ? [].concat(i.contents).join(" · ") : []).filter(Boolean).map(esc).join(" · ");
     app.innerHTML = '<p class="sm"><a href="' + (sh ? "/shelf/" + esc(sh.id) : "/shelves") + '" data-link>‹ ' + esc(sh ? sh.name : "Shelves") + "</a></p>" +
+      (i.status === "hunting" ? '<p class="lp mu">Still to find. This one is not on our shelves yet.</p>' : "") + card(i) +
       '<div class="plaque"><div class="gal">' + (i.img ? gallery(i) : '<div class="ph">Photograph coming soon</div>') + "</div><div>" +
-      '<div class="label"><div class="lk">' + esc([i.platform, i.region].filter(Boolean).join(" · ")) + (i.flags.grail ? " · Holy Grail" : "") + "</div>" +
-      "<h1>" + esc(i.title) + "</h1>" + (ed ? '<div class="led">' + ed + "</div>" : "") +
-      (i.status === "hunting" ? '<p class="lp">Still to find. This one is not on our shelves yet.</p>' : "") +
-      (i.sentence ? '<p class="sentence">' + esc(i.sentence) + "</p>" : "") +
-      (det || i.flags.sealed ? '<div class="ld">' + det + (i.flags.sealed ? (det ? " · " : "") + '<b class="gd">Sealed</b>' : "") + "</div>" : "") +
-      '<div class="ln">#' + esc(i.id) + " · 23gamesdigital.com/i/" + esc(i.id) + "</div></div>" +
       (t ? '<div class="card" style="margin-top:16px"><b>The game’s tale</b>' + (t.rarity && t.rarity.note ? '<p class="sm">' + esc(t.rarity.note) + "</p>" : "") +
         (t.origin ? '<p class="sm">' + esc(t.origin) + "</p>" : "") + (t.reached ? '<p class="sm">' + esc(t.reached) + "</p>" : "") + "</div>" : "") +
       '<div class="card memory" style="margin-top:16px"><b>Share your memory</b>' +
@@ -206,8 +199,40 @@
       '<div class="two"><label>Year it happened<input name="year" inputmode="numeric" maxlength="4"></label><label>Email, only if you want a reply<input name="email" type="email" maxlength="120"></label></div>' +
       '<button class="cta" type="submit">Send my memory</button><p class="sm mu" id="mm" role="status"></p></form></div>' +
       "</div></div>";
-    wireMemory();
+    wireMemory(); fitCard();
   }
+
+  /* ---- the plaque is the card: the back of the physical card (CR80, 85.6 x 54 mm), drawn from the museum's data on the same 1012 x 638 grid as card.py.
+     Where the printed card has the QR code, the page has the 23 emblem (you are already on the plaque). Units: --u is one grid pixel. ---- */
+  var PSHORT = { "PlayStation": "PS1", "PlayStation 2": "PS2", "PlayStation 3": "PS3", "PlayStation 4": "PS4", "PlayStation 5": "PS5", "PS Vita": "VITA" };
+  function card(i) {
+    var ed = i.edition && i.edition !== "Standard" ? (i.ce || i.edition) : "", kick = ed ? ed.toUpperCase() : "";
+    var det = [i.year, i.publisher, i.num].filter(Boolean).map(esc).join("  ·  "), cont = i.contents ? [].concat(i.contents).map(esc).join(" · ") : "";
+    var trophy = '<span class="pc-medal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0zM5 5H3v2a3 3 0 0 0 3 3M19 5h2v2a3 3 0 0 1-3 3M12 13v4M8 20h8M10 17h4" fill="#c9a227" stroke="#c9a227" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg></span>';
+    return '<div class="pc-wrap"><article class="pc" aria-label="Plaque: ' + esc(i.title) + '">' +
+      '<header class="pc-head"><span class="pc-rings"><i></i><i></i></span><b class="pc-brand">23 GAMES</b><span class="pc-sub">M U S E U M</span>' +
+      '<span class="pc-plat">' + esc([PSHORT[i.platform] || i.platform, i.region === "USA" ? "USA" : i.region].filter(Boolean).join("  ·  ")) + "</span></header><div class=\"pc-gold\"></div>" +
+      ((kick || i.flags.grail) ? '<div class="pc-kick">' + (kick ? "<span>" + esc(kick) + "</span>" : "") + (i.flags.grail ? trophy + "<span>HOLY GRAIL</span>" : "") + "</div>" : "") +
+      '<h1 class="pc-title" id="pc-title"><span>' + esc(i.title) + "</span></h1>" + (ed ? '<div class="pc-ed" id="pc-ed">' + esc(ed) + "</div>" : "") +
+      (i.sentence ? '<p class="pc-sent">' + esc(i.sentence) + "</p>" : "") + '<div class="pc-rule"></div>' +
+      (det ? '<div class="pc-det">' + det + "</div>" : "") + (cont ? '<div class="pc-cont">' + cont + "</div>" : "") + (i.flags.sealed ? '<div class="pc-seal">Sealed</div>' : "") +
+      '<div class="pc-emb"><span class="pc-2">2</span><span class="pc-3">3</span></div><div class="pc-no">#' + esc(i.id) + '</div><div class="pc-cap">THE LIVING PLAQUE</div>' +
+      '<footer class="pc-url">23gamesdigital.com</footer><footer class="pc-tag">ONE COLLECTION. ONE STORY. INFINITE PASSION.</footer><i class="pc-c1"></i><i class="pc-c2"></i></article>' +
+      '<div class="pc-read">' + (i.sentence ? '<p class="sentence">' + esc(i.sentence) + "</p>" : "") + ((det || cont || i.flags.sealed) ? '<p class="mu sm">' + [det, cont, i.flags.sealed ? "Sealed" : ""].filter(Boolean).join("<br>") + "</p>" : "") + "</div></div>";   /* phones: the card's small print, readable */
+  }
+  function fitCard() {   /* long titles shrink (62 -> 38 px on the grid) and then wrap to two lines; a long edition name shrinks too */
+    var t = document.getElementById("pc-title"), e = document.getElementById("pc-ed");
+    if (t) {
+      var sp = t.firstChild, sz = [62, 52, 44, 38], k = 0; t.style.whiteSpace = "nowrap"; t.style.setProperty("--fs", sz[0]);
+      while (k < sz.length - 1 && sp.offsetWidth > t.clientWidth + 1) { k++; t.style.setProperty("--fs", sz[k]); }
+      if (sp.offsetWidth > t.clientWidth + 1) {   /* two lines, as large as fits the title zone (the span is measured: a clipped flex box reports no overflow) */
+        t.style.whiteSpace = "normal";
+        var two = [38, 34, 30, 27, 24, 21]; for (var q = 0; q < two.length; q++) { t.style.setProperty("--fs", two[q]); if (sp.offsetHeight <= t.clientHeight + 1) break; }
+      }
+    }
+    if (e) { var f = 30; e.style.whiteSpace = "nowrap"; e.style.setProperty("--fs", f); while (f > 20 && e.scrollWidth > e.clientWidth + 1) { f -= 2; e.style.setProperty("--fs", f); } }
+  }
+  window.addEventListener("resize", function () { fitCard(); });
 
   /* the one thing a visitor can send: a memory, posted to the Netlify Form "memory" (static twin in index.html); it is never stored in this page */
   function wireMemory() {
