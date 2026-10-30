@@ -70,12 +70,27 @@
 
   function home() {
     document.title = "23 Games Museum";
-    app.innerHTML = '<section class="hero"><h1>A museum of PlayStation.</h1><p>Games, consoles and the stories they carry, shelf by shelf. ' +
-      '<b>' + num(D.quests.owned) + '</b> pieces are on our shelves today.</p>' +
+    var ch = (D.quests.chapters || []).filter(function (c) { return c.id === "ps2-us"; })[0], t = today();
+    app.innerHTML = '<section class="hero"><div class="kick">Day ' + num(t.day) + ' of PlayStation</div><h1>Every game has a plaque. Every plaque can carry your memory.</h1>' +
+      '<p>Search a game you played and find its plaque.</p>' +
       '<div class="search"><input id="hero-search" type="search" placeholder="Search a title, for example Martha Is Dead" aria-label="Search the museum" autocomplete="off"><div id="sr" class="results"></div></div>' +
-      '<a class="cta" href="/shelves" data-link>Walk the shelves</a></section>';
+      '<a class="cta" href="/shelves" data-link>Walk the shelves</a></section>' +
+      (t.item ? '<a class="card today" href="/i/' + esc(t.item.id) + '" data-link>' + (t.item.img ? '<img src="/img/' + esc(t.item.id) + '.jpg" alt="">' : "") +
+        '<div><div class="kick">Today’s plaque</div><b>' + esc(t.item.title) + '</b><div class="sm mu">' + itemLine(t.item) + "</div></div></a>" : "") +
+      (ch ? '<div class="quest"><div class="sm"><b>' + esc(ch.land) + "</b> · " + num(ch.have) + " of " + num(ch.goal) + " found</div>" +
+        '<div class="bar"><i style="width:' + Math.round(100 * ch.have / ch.goal) + '%"></i></div></div>' : "") +
+      '<p class="sm mu keepers">Soon: Keepers, the people who keep a game alive with us.</p>';
     wireSearch();
   }
+
+  /* the day count and today's plaque are the same for every visitor: they depend only on the date */
+  function today() {
+    var d = new Date(), utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()), day = Math.floor((utc - Date.UTC(1994, 11, 3)) / 864e5);
+    var pool = D.items.filter(function (i) { return i.status === "owned" && (i.img || D.stories[i.id]); });
+    if (!pool.length) pool = D.items.filter(function (i) { return i.status === "owned"; });
+    return { day: day + OFFSET, item: pool.length ? pool[day % pool.length] : null };
+  }
+  var OFFSET = 0;
 
   function shelves() {
     document.title = "Shelves · 23 Games Museum";
